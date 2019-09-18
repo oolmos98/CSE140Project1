@@ -19,6 +19,27 @@ void PrintInstruction(DecodedInstr *);
 Computer mips;
 RegVals rVals;
 
+/*  
+    opcodes for I-format
+*/
+unsigned int    addi = 0x08,
+                addiu = 0x09,
+                beq = 0x04,
+                blez = 0x06,
+                bne = 0x05,
+                bgtz = 0x07,
+                lb = 0x20,
+                lbu = 0x24,
+                lhu = 0x25,
+                lui = 0x0F,
+                lw = 0x23,
+                ori = 0x0D,
+                sb = 0x28,
+                sh = 0x29,
+                slti = 0x0A,
+                sltiu = 0x0B,
+                sw = 0x2B;
+
 /*
  *  Return an initialized computer with the stack pointer set to the
  *  address of the end of data memory, the remaining registers initialized
@@ -218,19 +239,98 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 
     switch (format)
     {
-    case 'R': //R Format
-        d->op = 0;
-        d->regs.r.rs = rVals->R_rs = (instr << 6) >> 27;
-        d->regs.r.rt = rVals->R_rt = (instr << 11) >> 27;
-        d->regs.r.rd = rVals->R_rd = (instr << 16) >> 27;
-        d->regs.r.shamt = (instr << 21) >> 27;
-        d->regs.r.funct = (instr << 26) >> 26;
-        PrintInstruction(d);
-        break;
+        case 'R': //R Format
+            d->op = 0;
+            d->regs.r.rs = rVals->R_rs = (instr << 6) >> 27;
+            d->regs.r.rt = rVals->R_rt = (instr << 11) >> 27;
+            d->regs.r.rd = rVals->R_rd = (instr << 16) >> 27;
+            d->regs.r.shamt = (instr << 21) >> 27;
+            d->regs.r.funct = (instr << 26) >> 26;
+            PrintInstruction(d);
+            break;
 
-    default:
+        case 'I':
+            // Check the opcode.
+            switch(opcode) {
+                case addi: 
+                    format = 'addi';
+                break;
 
-        break;
+                case addiu: 
+                    format = 'addiu';
+                break;
+
+                case beq: 
+                    format = 'beq';
+                break;
+
+                case blez: 
+                    format = 'blez';
+                break;
+
+                case bne: 
+                    format = 'bne';
+                break;
+
+                case bgtz: 
+                    format = 'bgtz';
+                break;
+
+                case lb: 
+                    format = 'lb';
+                break;
+
+                case lbu: 
+                    format = 'lbu';
+                break;
+
+                case lhu: 
+                    format = 'lhu';
+                break;
+
+                case lui: 
+                    format = 'lui';
+                break;
+
+                case lw: 
+                    format = 'lw';
+                break;
+
+                case ori: 
+                    format = 'ori';
+                break;
+
+                case sb: 
+                    format = 'sb';
+                break;
+
+                case sh: 
+                    format = 'sh';
+                break;
+
+                case slti: 
+                    format = 'slti';
+                break;
+
+                case sltiu: 
+                    format = 'sltiu';
+                break;
+
+                case sw: 
+                    format = 'sw';
+                break;
+            }
+            break;
+
+        case 'J':
+
+            int target = d->regs.j.target;
+            UpdatePC(d, target);
+            break;
+
+        default:
+
+            break;
     }
 }
 
