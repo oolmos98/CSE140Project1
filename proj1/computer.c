@@ -207,18 +207,28 @@ unsigned int Fetch(int addr)
 /* Decode instr, returning decoded instruction. */
 void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 {
-    int opcode = instr >> 26;
-
-    switch (opcode)
+    char format;
+    unsigned int opcode = instr >> 26;
+    if (opcode == 0)
+        format = 'R';
+    if (opcode == 0x02 || opcode == 0x03)
+        format = 'J';
+    else
+        format = 'I';
     {
-    case 0: //R Format
-        d->op = opcode;
+    }
+    switch (format)
+    {
+    case 'R': //R Format
+        d->op = 0;
         d->regs.r.rs = rVals->R_rs = (instr << 6) >> 27;
         d->regs.r.rt = rVals->R_rt = (instr << 11) >> 27;
         d->regs.r.rd = rVals->R_rd = (instr << 16) >> 27;
         d->regs.r.shamt = (instr << 21) >> 27;
         d->regs.r.funct = (instr << 26) >> 26;
+        PrintInstruction(d);
         break;
+
     default:
 
         break;
