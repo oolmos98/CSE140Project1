@@ -215,8 +215,7 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
         format = 'J';
     else
         format = 'I';
-    {
-    }
+
     switch (format)
     {
     case 'R': //R Format
