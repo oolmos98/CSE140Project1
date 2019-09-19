@@ -3,7 +3,7 @@
 #include <string.h>
 
 const char R[32][4] =
-    {
+{
         "zero", "at", "v0", "v1",
         "a0", "a1", "a2", "a3",
         "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
@@ -28,6 +28,8 @@ void addRfuction(struct functions *RFormat, char *name, int functioncode)
     strcpy(RFormat->name, name);
     RFormat->funct = functioncode;
 }
+
+
 void initialize(struct functions *RFormat)
 {
     for (int i = 0; i < 23; i++)
@@ -163,6 +165,46 @@ void machineCodeToBinary(int number, int rs, int rt, int rd, int shamt, int func
     printf("\n");
 }
 
+
+
+// Implemented by Jeff
+
+char* intToBinary(int number, int bits) {
+    
+    char* binary = (char*)malloc(sizeof(char) * bits);
+    int bit, index = 0;
+    
+    // Skim through a range of bits
+    for (int i = bits-1; i >= 0 ; i--) {
+        bit = number >> i;
+        
+        if(bit & 1) // check if the bit is 1
+        {
+            *(binary + index) += '1';
+        }
+        else {
+            *(binary + index) += '0';
+        }
+        index++;
+    }
+    *(binary + index) = '\0';
+    
+    return binary;
+}
+
+void printMachineCode(int opcode, int rs, int rt, int rd, int shamt, int functioncode) {
+    char* machineCode = intToBinary(opcode, 6);
+    strcat(machineCode, intToBinary(rs, 5));
+    strcat(machineCode, intToBinary(rt, 5));
+    strcat(machineCode, intToBinary(rd, 5));
+    strcat(machineCode, intToBinary(shamt, 5));
+    strcat(machineCode, intToBinary(functioncode, 6));
+    
+    printf("Machine Code: %s\n", machineCode);
+    
+    free(machineCode);
+}
+
 char delimiter[] = ", ";
 
 int main(int argc, char **argv)
@@ -185,7 +227,6 @@ int main(int argc, char **argv)
     struct functions RFunctions[23];
     initialize(RFunctions);
     //printf("printing RFunc\n");
-
     if (strcmp(ins[0], "srl") == 0 || strcmp(ins[0], "sll") == 0)
     {
 
@@ -195,14 +236,7 @@ int main(int argc, char **argv)
         printf("Rd: %s (R%d)\n", ins[1], findRegisterID(ins[1]));
         printf("Shamt: %d\n", atoi(ins[3]));
         printf("Funct: %d\n", findOpcodeFunc(RFunctions, ins[0]));
-
-        //int functcode = findOpcodeFunc(RFunctions, ins[0]);
-
-        // int rt[5], rd[5], shamt[5], funct[6];
-        //
-        machineCodeToBinary(0, 0, findRegisterID(ins[2]), findRegisterID(ins[1]), atoi(ins[3]), findOpcodeFunc(RFunctions, ins[0]));
-
-        // printf("%s%s%d%d%d%s", "000000", "00000", rt, rd, shamt, funct);
+        printMachineCode(0, 0, findRegisterID(ins[2]), findRegisterID(ins[1]), atoi(ins[3]), findOpcodeFunc(RFunctions, ins[0]));
     }
     else if (strcmp(ins[0], "jr") == 0)
     {
@@ -213,6 +247,7 @@ int main(int argc, char **argv)
         printf("Rd: 0\n");
         printf("Shamt: 0\n");
         printf("Funct: %d\n", findOpcodeFunc(RFunctions, ins[0]));
+        printMachineCode(0, findRegisterID(ins[1]), 0, 0, 0, findOpcodeFunc(RFunctions, ins[0]));
     }
     else
     {
@@ -222,12 +257,12 @@ int main(int argc, char **argv)
         printf("Rd: %s (R%d)\n", ins[1], findRegisterID(ins[1]));
         printf("Shamt: 0\n");
         printf("Funct: %d\n", findOpcodeFunc(RFunctions, ins[0]));
-        //machineCodeToBinary(int number, int rs, int rt, int rd, int shamt, int funct)
-        machineCodeToBinary(0, findRegisterID(ins[2]), findRegisterID(ins[3]), findRegisterID(ins[1]), 0, findOpcodeFunc(RFunctions, ins[0]));
+        printMachineCode(0, findRegisterID(ins[2]), findRegisterID(ins[3]), findRegisterID(ins[1]), 0, findOpcodeFunc(RFunctions, ins[0]));
     }
 
     // printf("function: %s \nfunctioncode: %i\n", RFunctions[0].name, RFunctions[0].funct);
     // printf("function: %s \nfunctioncode: %i \n", RFunctions[1].name, RFunctions[1].funct);
+
 
     return 0;
 }
