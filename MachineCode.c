@@ -3,15 +3,15 @@
 #include <string.h>
 
 const char R[32][4] =
-{
-    "zero", "at", "v0", "v1",
-    "a0", "a1", "a2", "a3",
-    "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
-    "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
-    "t8", "t9",
-    "k0", "k1",
-    "gp", "sp", "fp", "ra"
-    
+    {
+        "zero", "at", "v0", "v1",
+        "a0", "a1", "a2", "a3",
+        "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
+        "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
+        "t8", "t9",
+        "k0", "k1",
+        "gp", "sp", "fp", "ra"
+
 };
 
 //typedef unsigned int uint;
@@ -24,9 +24,9 @@ struct functions
 
 void addRfuction(struct functions *RFormat, char *name, int functioncode)
 {
-  //printf("Called AddR\n");
-  strcpy(RFormat->name, name);
-  RFormat->funct = functioncode;
+    //printf("Called AddR\n");
+    strcpy(RFormat->name, name);
+    RFormat->funct = functioncode;
 }
 void initialize(struct functions *RFormat)
 {
@@ -59,19 +59,23 @@ void initialize(struct functions *RFormat)
     addRfuction(&RFormat[22], "subu", 0x23);
 }
 
-int findRegisterID( char* reg) {
-    for(int i = 0; i < 32; i++) {
-        if(strcmp(reg, R[i]) == 0) {
+int findRegisterID(char *reg)
+{
+    for (int i = 0; i < 32; i++)
+    {
+        if (strcmp(reg, R[i]) == 0)
+        {
             return i;
         }
     }
     return -1;
 }
 
-int findOpcodeFunc(struct functions *RFormat, char* operation) {
+int findOpcodeFunc(struct functions *RFormat, char *operation)
+{
     for (int i = 0; i < 23; i++)
     {
-        if(strcmp(RFormat[i].name, operation) == 0)
+        if (strcmp(RFormat[i].name, operation) == 0)
         {
             return RFormat[i].funct;
         }
@@ -79,12 +83,84 @@ int findOpcodeFunc(struct functions *RFormat, char* operation) {
     return -1;
 }
 
-void intToBinary(int number, int binary[]) {
-    int temp = number;
-    for(int i = 0; temp > 0 ; i++) {
-        binary[i] = temp % 2;
-        temp /= 2;
+void machineCodeToBinary(int number, int rs, int rt, int rd, int shamt, int funct)
+{
+    int bin[32];
+
+    int temp = rs;
+    for (int i = 0; i < 32; i++)
+    {
+        if (i < 6)
+        {
+            bin[i] = 0;
+            continue;
+        }
+        if (i < 11 && i > 5)
+        {
+            if (temp == 0)
+            {
+                bin[i] = 0;
+                continue;
+            }
+            bin[i] = temp % 2;
+            temp /= 2;
+            continue;
+        }
+        temp = rt;
+        if (i < 16 && i > 10)
+        {
+            if (temp == 0)
+            {
+                bin[i] = 0;
+                continue;
+            }
+            bin[i] = temp % 2;
+            temp /= 2;
+            continue;
+        }
+        temp = rd;
+        if (i < 21 && i > 15)
+        {
+            if (temp == 0)
+            {
+                bin[i] = 0;
+                continue;
+            }
+            bin[i] = temp % 2;
+            temp /= 2;
+            continue;
+        }
+        temp = shamt;
+        if (i < 26 && i > 20)
+        {
+            if (temp == 0)
+            {
+                bin[i] = 0;
+                continue;
+            }
+            bin[i] = temp % 2;
+            temp /= 2;
+            continue;
+        }
+        temp = funct;
+        if (i < 32 && i > 25)
+        {
+            if (temp == 0)
+            {
+                bin[i] = 0;
+                continue;
+            }
+            bin[i] = temp % 2;
+            temp /= 2;
+            continue;
+        }
     }
+    printf("Machine Code: ");
+    for (int i = 0; i < 32; i++)
+    {
+        printf("%d", bin[i]);
+    }
+    printf("\n");
 }
 
 char delimiter[] = ", ";
@@ -104,43 +180,33 @@ int main(int argc, char **argv)
 
         ins[index++] = temp;
         temp = strtok(NULL, delimiter);
-    
     }
 
     struct functions RFunctions[23];
     initialize(RFunctions);
     //printf("printing RFunc\n");
-    
-    
-    
-    if(strcmp(ins[0], "srl") == 0 || strcmp(ins[0], "sll") == 0 ) {
-        
+
+    if (strcmp(ins[0], "srl") == 0 || strcmp(ins[0], "sll") == 0)
+    {
+
         printf("Operation: %s\n", ins[0]);
         printf("Rs: 0\n");
         printf("Rt: %s (R%d)\n", ins[2], findRegisterID(ins[2]));
         printf("Rd: %s (R%d)\n", ins[1], findRegisterID(ins[1]));
         printf("Shamt: %d\n", atoi(ins[3]));
         printf("Funct: %d\n", findOpcodeFunc(RFunctions, ins[0]));
-        
-        int functcode = findOpcodeFunc(RFunctions, ins[0]);
-        
-        int rt[5], rd[5], shamt[5], funct[6];
-        
-        intToBinary(findRegisterID(ins[2]), rt);
-        intToBinary(findRegisterID(ins[1]), rd);
-        intToBinary(atoi(ins[3]), shamt);
-        intToBinary(findOpcodeFunc(RFunctions, ins[0]) , funct);
-        
-        //itoa(findRegisterID(ins[2]), rt, 2);
-        //itoa(findRegisterID(ins[1]), rd, 2);
-        //itoa(atoi(ins[3]), shamt, 2);
-        //itoa(functcode, funct, 2);
-        
-        
-        printf("%s%s%d%d%d%s", "000000", "00000", rt, rd, shamt, funct);
+
+        //int functcode = findOpcodeFunc(RFunctions, ins[0]);
+
+        // int rt[5], rd[5], shamt[5], funct[6];
+
+        machineCodeToBinary(0, 0, findRegisterID(ins[2]), findRegisterID(ins[1]), atoi(ins[3]), findOpcodeFunc(RFunctions, ins[0]));
+
+        // printf("%s%s%d%d%d%s", "000000", "00000", rt, rd, shamt, funct);
     }
-    else if (strcmp(ins[0], "jr") == 0){
-        
+    else if (strcmp(ins[0], "jr") == 0)
+    {
+
         printf("Operation: %s\n", ins[0]);
         printf("Rs: %s (R%d)\n", ins[1], findRegisterID(ins[1]));
         printf("Rt: 0\n");
@@ -148,7 +214,8 @@ int main(int argc, char **argv)
         printf("Shamt: 0\n");
         printf("Funct: %d\n", findOpcodeFunc(RFunctions, ins[0]));
     }
-    else {
+    else
+    {
         printf("Operation: %s\n", ins[0]);
         printf("Rs: %s (R%d)\n", ins[2], findRegisterID(ins[2]));
         printf("Rt: %s (R%d)\n", ins[3], findRegisterID(ins[3]));
@@ -156,13 +223,11 @@ int main(int argc, char **argv)
         printf("Shamt: 0");
         printf("Funct: %d\n", findOpcodeFunc(RFunctions, ins[0]));
     }
-    
 
     // printf("function: %s \nfunctioncode: %i\n", RFunctions[0].name, RFunctions[0].funct);
     // printf("function: %s \nfunctioncode: %i \n", RFunctions[1].name, RFunctions[1].funct);
 
-
-  return 0;
+    return 0;
 }
 
 /*
