@@ -199,7 +199,7 @@ int main(int argc, char **argv)
         //int functcode = findOpcodeFunc(RFunctions, ins[0]);
 
         // int rt[5], rd[5], shamt[5], funct[6];
-
+        //
         machineCodeToBinary(0, 0, findRegisterID(ins[2]), findRegisterID(ins[1]), atoi(ins[3]), findOpcodeFunc(RFunctions, ins[0]));
 
         // printf("%s%s%d%d%d%s", "000000", "00000", rt, rd, shamt, funct);
@@ -220,8 +220,10 @@ int main(int argc, char **argv)
         printf("Rs: %s (R%d)\n", ins[2], findRegisterID(ins[2]));
         printf("Rt: %s (R%d)\n", ins[3], findRegisterID(ins[3]));
         printf("Rd: %s (R%d)\n", ins[1], findRegisterID(ins[1]));
-        printf("Shamt: 0");
+        printf("Shamt: 0\n");
         printf("Funct: %d\n", findOpcodeFunc(RFunctions, ins[0]));
+        //machineCodeToBinary(int number, int rs, int rt, int rd, int shamt, int funct)
+        machineCodeToBinary(0, findRegisterID(ins[2]), findRegisterID(ins[3]), findRegisterID(ins[1]), 0, findOpcodeFunc(RFunctions, ins[0]));
     }
 
     // printf("function: %s \nfunctioncode: %i\n", RFunctions[0].name, RFunctions[0].funct);
