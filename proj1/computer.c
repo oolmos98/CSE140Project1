@@ -22,23 +22,23 @@ RegVals rVals;
 /*  
     opcodes for I-format
 */
-unsigned int addi = 0x08,
-             addiu = 0x09,
-             beq = 0x04,
-             blez = 0x06,
-             bne = 0x05,
-             bgtz = 0x07,
-             lb = 0x20,
-             lbu = 0x24,
-             lhu = 0x25,
-             lui = 0x0F,
-             lw = 0x23,
-             ori = 0x0D,
-             sb = 0x28,
-             sh = 0x29,
-             slti = 0x0A,
-             sltiu = 0x0B,
-             sw = 0x2B;
+const unsigned int addi = 0x08,
+                   addiu = 0x09,
+                   beq = 0x04,
+                   blez = 0x06,
+                   bne = 0x05,
+                   bgtz = 0x07,
+                   lb = 0x20,
+                   lbu = 0x24,
+                   lhu = 0x25,
+                   lui = 0x0F,
+                   lw = 0x23,
+                   ori = 0x0D,
+                   sb = 0x28,
+                   sh = 0x29,
+                   slti = 0x0A,
+                   sltiu = 0x0B,
+                   sw = 0x2B;
 
 /*
  *  Return an initialized computer with the stack pointer set to the
@@ -254,79 +254,79 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
         switch (opcode)
         {
         case addi:
-            format = 'addi';
+            //format = 'addi';
             break;
 
         case addiu:
-            format = 'addiu';
+            //format = 'addiu';
             break;
 
         case beq:
-            format = 'beq';
+            //format = 'beq';
             break;
 
         case blez:
-            format = 'blez';
+            //format = 'blez';
             break;
 
         case bne:
-            format = 'bne';
+            //format = 'bne';
             break;
 
         case bgtz:
-            format = 'bgtz';
+            //format = 'bgtz';
             break;
 
         case lb:
-            format = 'lb';
+            //format = 'lb';
             break;
 
         case lbu:
-            format = 'lbu';
+            //format = 'lbu';
             break;
 
         case lhu:
-            format = 'lhu';
+            //format = 'lhu';
             break;
 
         case lui:
-            format = 'lui';
+            // format = 'lui';
             break;
 
         case lw:
-            format = 'lw';
+            // format = 'lw';
             break;
 
         case ori:
-            format = 'ori';
+            // format = 'ori';
             break;
 
         case sb:
-            format = 'sb';
+            //format = 'sb';
             break;
 
         case sh:
-            format = 'sh';
+            //format = 'sh';
             break;
 
         case slti:
-            format = 'slti';
+            //format = 'slti';
             break;
 
         case sltiu:
-            format = 'sltiu';
+            //format = 'sltiu';
             break;
 
         case sw:
-            format = 'sw';
+            //format = 'sw';
             break;
         }
         break;
 
     case 'J':
 
-        int target = d->regs.j.target;
-        UpdatePC(d, target);
+        d->regs.j.target = (instr >> 6) << 6;
+        UpdatePC(d, d->regs.j.target);
         break;
 
     default:
@@ -358,6 +358,9 @@ int Execute(DecodedInstr *d, RegVals *rVals)
  */
 void UpdatePC(DecodedInstr *d, int val)
 {
+    if(val>0){ 
+        //mips.pc = (val+0x00400000)/4;
+    }
     mips.pc += 4;
     /* Your code goes here */
 }
