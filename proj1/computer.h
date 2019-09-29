@@ -3,59 +3,67 @@
 
 struct SimulatedComputer
 {
-  int memory[MAXNUMINSTRS + MAXNUMDATA];
-  int registers[32];
-  int pc;
-  int printingRegisters, printingMemory, interactive, debugging;
+	int memory[MAXNUMINSTRS + MAXNUMDATA];
+	int registers[32];
+	int pc;
+	int printingRegisters, printingMemory, interactive, debugging;
 };
 typedef struct SimulatedComputer Computer;
 
 typedef enum
 {
-  R = 0,
-  I,
-  J
+	R = 0,
+	I,
+	J
 } InstrType;
 
 typedef struct
 {
-  int rs;
-  int rt;
-  int rd;
-  int shamt;
-  int funct;
+	int rs;
+	int rt;
+	int rd;
+	int shamt;
+	int funct;
 } RRegs;
 
 typedef struct
 {
-  int rs;
-  int rt;
-  int addr_or_immed;
+	int rs;
+	int rt;
+	int addr_or_immed;
 } IRegs;
 
 typedef struct
 {
-  int target;
+	int target;
 } JRegs;
 
 typedef struct
 {
-  InstrType type;
-  int op;
-  union {
-    RRegs r;
-    IRegs i;
-    JRegs j;
-  } regs;
+	InstrType type;
+	int op;
+	union {
+		RRegs r;
+		IRegs i;
+		JRegs j;
+	} regs;
 } DecodedInstr;
 
 typedef struct
 {
-  int R_rs; /*Value in register rs*/
-  int R_rt;
-  int R_rd;
+	int R_rs; /*Value in register rs*/
+	int R_rt;
+	int R_rd;
 } RegVals;
 
+
+typedef struct 
+{
+	int type;
+	char *name;
+	int funct;
+} InstrSet;
+
 void InitComputer(FILE *, int printingRegisters, int printingMemory,
-                  int debugging, int interactive);
+									int debugging, int interactive);
 void Simulate();
