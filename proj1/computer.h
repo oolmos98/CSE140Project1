@@ -57,12 +57,13 @@ typedef struct
 } RegVals;
 
 
-typedef struct 
-{
-	int type;
-	char *name;
-	int funct;
-} InstrSet;
+typedef struct {
+
+	int nPC_sel;
+	
+
+} Control;
+
 
 void InitComputer(FILE *, int printingRegisters, int printingMemory,
 									int debugging, int interactive);
