@@ -15,14 +15,10 @@ int Mem(DecodedInstr *, int, int *);
 void RegWrite(DecodedInstr *, int, int *);
 void UpdatePC(DecodedInstr *, int);
 void PrintInstruction(DecodedInstr *);
-void AddInstructions(InstrSet* instr, int, char*, unsigned int);
-void InitiateInstructions(InstrSet*, DecodedInstr *);
-char* findInstructionName(InstrSet *, int);
 
 /*Globally accessible Computer variable*/
 Computer mips;
 RegVals rVals;
-InstrSet Instructions[43];
 
 /*  
 	opcodes for I-format
@@ -61,14 +57,13 @@ const unsigned int 	jal = 0x03,
 const unsigned int 	add = 0x20,
 					addu = 0x21,
 					and = 0x24,
-					div = 0x1A,
+					i_div = 0x1A,			// Another 'div' already exists oof
 					divu = 0x1B,
 					jr = 0x08,
 					mfhi = 0x10,
 					mthi = 0x11,
 					mflo = 0x12,
 					mtlo = 0x13,
-					mfc0 = 0x0,
 					mult = 0x18,
 					multu = 0x19,
 					nor = 0x27,
@@ -81,85 +76,6 @@ const unsigned int 	add = 0x20,
 					sra = 0x03,
 					sub = 0x22,
 					subu = 0x23;
-
-
-void AddInstructions(InstrSet* instr, int type, char* name, unsigned int code)
-{
-	instr->type = type;
-	strcpy(instr->name, name);
-	instr->funct = code;
-}
-
-void InitiateInstructions(InstrSet* instr, DecodedInstr *d)
-{
-	for (int i = 0; i < 43; i++)
-	{
-		instr[i].name = malloc(sizeof(char) * 5);
-	}
-
-	// Add the R-format Instructions
-	AddInstructions(&instr[0], d->type->R, "add", 0x20);
-	AddInstructions(&instr[1], d->type->R, "addu", 0x21);
-	AddInstructions(&instr[2], d->type->R, "and", 0x24);
-	AddInstructions(&instr[3], d->type->R, "div", 0x1A);
-	AddInstructions(&instr[4], d->type->R, "divu", 0x1B);
-	AddInstructions(&instr[5], d->type->R, "jr", 0x08);
-	AddInstructions(&instr[6], d->type->R, "mfhi", 0x10);
-	AddInstructions(&instr[7], d->type->R, "mthi", 0x11);
-	AddInstructions(&instr[8], d->type->R, "mflo", 0x12);
-	AddInstructions(&instr[9], d->type->R, "mtlo", 0x13);
-	AddInstructions(&instr[10], d->type->R, "mfc0", 0x0);
-	AddInstructions(&instr[11], d->type->R, "mult", 0x18);
-	AddInstructions(&instr[12], d->type->R, "multu", 0x19);
-	AddInstructions(&instr[13], d->type->R, "nor", 0x27);
-	AddInstructions(&instr[14], d->type->R, "xor", 0x26);
-	AddInstructions(&instr[15], d->type->R, "or", 0x25);
-	AddInstructions(&instr[16], d->type->R, "slt", 0x2A);
-	AddInstructions(&instr[17], d->type->R, "sltu", 0x2B);
-	AddInstructions(&instr[18], d->type->R, "sll", 0x00); // uses shift amt
-	AddInstructions(&instr[19], d->type->R, "srl", 0x02); // uses shift amt
-	AddInstructions(&instr[20], d->type->R, "sra", 0x03);
-	AddInstructions(&instr[21], d->type->R, "sub", 0x22);
-	AddInstructions(&instr[22], d->type->R, "subu", 0x23);
-
-	// Add the J-format Instructions
-	AddInstructions(&instr[23], d->type->J, "j", 0x02);
-	AddInstructions(&instr[24], d->type->J, "jal", 0x03);
-
-	// Add the I-format Instructions
-	AddInstructions(&instr[25], d->type->I, "addi", 0x08);
-	AddInstructions(&instr[26], d->type->I, "addiu", 0x09);
-	AddInstructions(&instr[27], d->type->I, "andi", 0x0C);
-	AddInstructions(&instr[28], d->type->I, "beq", 0x04);
-	AddInstructions(&instr[29], d->type->I, "blez", 0x06);
-	AddInstructions(&instr[30], d->type->I, "bne", 0x05);
-	AddInstructions(&instr[31], d->type->I, "lb", 0x20);
-	AddInstructions(&instr[32], d->type->I, "lbu", 0x24);
-	AddInstructions(&instr[33], d->type->I, "lhu", 0x25);
-	AddInstructions(&instr[34], d->type->I, "lui", 	0x0F);
-	AddInstructions(&instr[35], d->type->I, "lw", 0x23);
-	AddInstructions(&instr[36], d->type->I, "ori", 0x0D);
-	AddInstructions(&instr[37], d->type->I, "sb", 0x28);
-	AddInstructions(&instr[38], d->type->I, "sh", 0x29);
-	AddInstructions(&instr[39], d->type->I, "slti", 0x0A);
-	AddInstructions(&instr[40], d->type->I, "sltiu", 0x0B);
-	AddInstructions(&instr[41], d->type->I, "sw", 0x2B);
-	AddInstructions(&instr[42], d->type->I, "bgtz", 0x07);
-	
-
-}
-
-char* findInstructionName(InstrSet *instr, int code)
-{
-	for (int i = 0; i < 43; i++)
-	{
-		if(instr[i].funct == code) 
-		{
-			return instr[i].name;
-		}
-	}
-	return '\0';
-}
 
 /*  
 	opcodes for R-format
@@ -225,9 +141,6 @@ void Simulate()
 	unsigned int instr;
 	int changedReg = -1, changedMem = -1, val;
 	DecodedInstr d;
-
-
-	InitiateInstructions(Instructions, d);
 
 	/* Initialize the PC to the start of the code section */
 	mips.pc = 0x00400000;
@@ -357,70 +270,97 @@ unsigned int Fetch(int addr)
 void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 {
 	char format;
-	unsigned int opcode = instr >> 26;
+	int opcode = instr >> 26;
+	printf("%d\n", opcode);
+
+
 	if (opcode == 0)
 		format = 'R';
-	if (opcode == 0x02 || opcode == 0x03)
+	else if (opcode == jump || opcode == jal)
 		format = 'J';
 	else
 		format = 'I';
 
 	switch (format)
 	{
-	case 'R': //R Format
-		/*
-			R-format
-			opcode, rs, rt, rd, shamt, funct
-		*/
-		d->op = 0;
-		d->regs.r.rs = rVals->R_rs = (instr << 6) >> 27;
-		d->regs.r.rt = rVals->R_rt = (instr << 11) >> 27;
-		d->regs.r.rd = rVals->R_rd = (instr << 16) >> 27;
-		d->regs.r.shamt = (instr << 21) >> 27;
-		d->regs.r.funct = (instr << 26) >> 26;
-		PrintInstruction(d);
-		break;
+		case 'R': //R Format
+			/*
+				R-format
+				opcode, rs, rt, rd, shamt, funct
+			*/
+			d->op = 0;
+			d->regs.r.rs = rVals->R_rs = (instr << 6) >> 27;
+			d->regs.r.rt = rVals->R_rt = (instr << 11) >> 27;
+			d->regs.r.rd = rVals->R_rd = (instr << 16) >> 27;
+			d->regs.r.shamt = (instr << 21) >> 27;
+			d->regs.r.funct = (instr << 26) >> 26;
+			printf("%d\n", (instr << 26) >> 26);
+			//PrintInstruction(d);
+			break;
 
-	case 'I':
-		/*
-			I-format
-			opcode, rs, rt, immediate
-		*/
-		d->op = instr >> 26;
-		d->regs->i.rs = (instr << 6) >> 27;
-		d->regs->i.rt = (instr << 11) >> 27;
-		d->regs->i.addr_or_immed = (instr << 16) >> 16;
-		
-		break;
-	case 'J':
-		/*
-			I-format
-			opcode, jump_addr
+		case 'I':
+			/*
+				I-format
+				opcode, rs, rt, immediate
+			*/
+			d->op = opcode;
+			d->regs.i.rs = (instr << 6) >> 27;
+			d->regs.i.rt = (instr << 11) >> 27;
+			d->regs.i.addr_or_immed = (instr << 16) >> 16;
+			//PrintInstruction(d);
+			break;
+		case 'J': 
+			/*
+				I-format
+				opcode, jump_addr
 
-			x - opcode
-			y - address
+				x - opcode
+				y - address
 
-			xxxxxxyyyyyyyyyyyyyyyyyyyyyyyyyy
-			
-			instr << 6
+				xxxxxxyyyyyyyyyyyyyyyyyyyyyyyyyy
 
-			yyyyyyyyyyyyyyyyyyyyyyyyyy000000
-		
-			instr >> 6
-			000000yyyyyyyyyyyyyyyyyyyyyyyyyy
+				instr << 8;
+				yyyyyyyyyyyyyyyyyyyyyyyyyy00
 
-		*/
-		d->regs.j.target = (instr << 6) >> 6;
-		if(opcode == jal) 
-		{
-			d->regs.r.rs = mips.pc;
-		}
-		UpdatePC(d, d->regs.j.target);
-		break;
+				instr >> 4;
 
-	default:
+				0000yyyyyyyyyyyyyyyyyyyyyyyyyy00
 
-		break;
+
+				iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
+
+				| (copy the first for bits of the current mips PC )
+
+				0000yyyyyyyyyyyyyyyyyyyyyyyyyy00
+
+
+			*/
+
+			d->op = opcode;
+			int curr_pc = (mips.pc >> 28) << 28;
+
+			int target_pc = ((instr << 8) >> 4) | curr_pc;
+
+
+			d->regs.j.target = target_pc;
+			if(opcode == jal) 
+			{
+				/*
+					(mips.pc + 4) << 4
+					iiiiiiiiiiiiiiiiiiiiiiiiiiii0000
+
+					((mips.pc + 4) << 4) >> 6
+					000000iiiiiiiiiiiiiiiiiiiiiiiiii
+				*/
+				d->regs.r.rs = ((mips.pc + 4) << 4) >> 6;
+			}
+			//PrintInstruction(d);
+			UpdatePC(d, d->regs.j.target);
+			break;
+
+		default:
+
+			break;
 	}
 }
 
@@ -430,121 +370,230 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
  */
 void PrintInstruction(DecodedInstr *d)
 {
-
-	char* functionName;
-	int rs = 0;
-	int rt = 0;
-	int rd = 0;
-
 	/* Your code goes here */
 	// Check if the instruction is R-foarmat
-	if(d->type == 0) 
-	{
-		functionName = findInstructionName(Instructions, d->regs.r.funct);
-		rs = d->regs.r.rs;
-		rt = d->regs.r.rt;
-		rd = d->regs.r.rd;
+	char* instr = (char*)malloc(sizeof(char)*5);
+	int supported_instr = 1;
 
-		/*
-			
-			R-functions that uses all 3 registers
-		
-		*/
-		if(d->regs.r.funct != sll || d->regs.r.funct != srl) 
+	if(d->op == 0)
+	{
+		switch(d->regs.r.funct) 
 		{
-			printf("%s $%d, $%d, $%d", functionName, d->regs.r.rd, d->regs.r.rs, d->regs.r.rt);
+			case add:
+				strcpy(instr, "add");
+			break;
+
+			case addu:
+				strcpy(instr, "addu");
+			break;
+
+			case and:
+				strcpy(instr, "and");
+			break;
+
+			case i_div:
+				strcpy(instr, "div");
+			break;
+
+			case divu:
+				strcpy(instr, "divu");
+			break;
+
+			case jr:
+				strcpy(instr, "jr");
+			break;
+
+			case mfhi:
+				strcpy(instr, "mfhi");
+			break;
+
+			case mthi:
+				strcpy(instr, "mthi");
+			break;
+
+			case mflo:
+				strcpy(instr, "mflo");
+			break;
+
+			case mtlo:
+				strcpy(instr, "mtlo");
+			break;
+
+			case mult:
+				strcpy(instr, "mult");
+			break;
+
+			case multu:
+				strcpy(instr, "multu");
+			break;
+
+			case nor:
+				strcpy(instr, "nor");
+			break;
+
+			case xor:
+				strcpy(instr, "xor");
+			break;
+
+			case or:
+				strcpy(instr, "or");
+			break;
+
+			case slt:
+				strcpy(instr, "slt");
+			break;
+
+			case sltu:
+				strcpy(instr, "sltu");
+			break;
+
+			case sll:
+				strcpy(instr, "sll");
+			break;
+
+			case srl:
+				strcpy(instr, "srl");
+			break;
+
+			case sra:
+				strcpy(instr, "sra");
+			break;
+
+			case sub:
+				strcpy(instr, "sub");
+			break;
+
+			case subu:
+				strcpy(instr, "subu");
+			break;
+
+			default: // gets triggered if theres an unsupported code
+				supported_instr = 0;
+			break;
+		}
+	}
+	else 
+	{
+		switch(d->op)
+		{
+			case addi:
+				strcpy(instr, "addi");
+			break;
+
+			case addiu:
+				strcpy(instr, "addiu");
+			break;
+
+			case beq:
+				strcpy(instr, "beq");
+			break;
+
+			case blez:
+				strcpy(instr, "blez");
+			break;
+
+			case bne:
+				strcpy(instr, "bne");
+			break;
+
+			case bgtz:
+				strcpy(instr, "bgtz");
+			break;
+
+			case lb:
+				strcpy(instr, "lb");
+			break;
+
+			case lbu:
+				strcpy(instr, "lbu");
+			break;
+
+			case lhu:
+				strcpy(instr, "lhu");
+			break;
+
+			case lui:
+				strcpy(instr, "lui");
+			break;
+
+			case lw:
+				strcpy(instr, "lw");
+			break;
+
+			case ori:
+				strcpy(instr, "ori");
+			break;
+
+			case sb:
+				strcpy(instr, "sb");
+			break;
+
+			case sh:
+				strcpy(instr, "sh");
+			break;
+
+			case slti:
+				strcpy(instr, "slti");
+			break;
+
+			case sltiu:
+				strcpy(instr, "sltiu");
+			break;
+
+			case sw:
+				strcpy(instr, "sw");
+			break;
+
+			case jal:
+				strcpy(instr, "jal");
+			break;
+
+			case jump:
+				strcpy(instr, "jump");
+			break;
+
+			default: // gets triggered if theres an unsupported code
+				supported_instr = 0;
+			break;
+
+		}
+	}
+
+	if(supported_instr == 0) {
+		printf("Unsupported instruction found. Terminating program\n");
+		exit(0);
+	}
+	
+
+	if(d->type == R) 
+	{
+		if(d->regs.r.funct == sll || d->regs.r.funct == srl)
+		{
+			printf("%s $%d, $%d, %d", instr, d->regs.r.rd, d->regs.r.rs, d->regs.r.shamt);
 		}
 		else 
 		{
-			printf("%s $%d, $%d, %d", functionName, d->regs.r.rd, d->regs.r.rt, d->regs.r.shamt);
+			printf("%s $%d, $%d, $%d", instr, d->regs.r.rd, d->regs.r.rs, d->regs.r.rt);
 		}
+		
 	}
-	// Check if the instruction is I-foarmat
-	else if(d->type == 1) 
+	else if(d->type == I) 
+	{
+
+	} 
+	else if(d->type == J)
 	{
 
 	}
-	// Check if the instruction is J-foarmat
-	else if(d->type == 2) 
-	{
 
-	}
+	free(instr);
 }
 
 /* Perform computation needed to execute d, returning computed value */
 int Execute(DecodedInstr *d, RegVals *rVals)
 {
+
 	/* Your code goes here */
-	switch (opcode)
-	{
-		case addi:
-			
-			break;
-
-		case addiu:
-		   
-			break;
-
-		case beq:
-			
-			break;
-
-		case blez:
-			
-			break;
-
-		case bne:
-			
-			break;
-
-		case bgtz:
-			
-			break;
-
-		case lb:
-			
-			break;
-
-		case lbu:
-			
-			break;
-
-		case lhu:
-			
-			break;
-
-		case lui:
-			
-			break;
-
-		case lw:
-			
-			break;
-
-		case ori:
-			
-			break;
-
-		case sb:
-			
-			break;
-
-		case sh:
-			
-			break;
-
-		case slti:
-			
-			break;
-
-		case sltiu:
-			
-			break;
-
-		case sw:
-			
-			break;
-	}
 	return 0;
 }
 
@@ -560,6 +609,19 @@ void UpdatePC(DecodedInstr *d, int val)
 	}
 	mips.pc += 4;
 	/* Your code goes here */
+
+	if(d->op == jump) 
+	{
+		mips.pc = val;
+	}
+	else if (d->op == jal) 
+	{
+		mips.pc = val;
+	}
+	else if (d->op == 0 && d->regs.r.funct == jr) 
+	{
+		mips.pc = d->regs.r.rs;
+	}
 }
 
 /*
