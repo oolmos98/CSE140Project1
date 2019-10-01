@@ -205,12 +205,12 @@ void Simulate()
 
 		UpdatePC(&d, val);
 
-		/* 
+	/* 
 	 * Perform memory load or store. Place the
 	 * address of any updated memory in *changedMem, 
 	 * otherwise put -1 in *changedMem. 
 	 * Return any memory value that is read, otherwise return -1.
-		 */
+	 */
 		val = Mem(&d, val, &changedMem);
 
 		/* 
@@ -370,8 +370,9 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 			d->regs.i.rs = (instr << 6) >> 27;
 			d->regs.i.rt = (instr << 11) >> 27;
 			d->regs.i.addr_or_immed = (instr << 16) >> 16;
-			//PrintInstruction(d);
 
+			// ALUsrc will always be in Immediate field
+			ALUsrc = 1;
 
 			/*
 				An example.
@@ -379,7 +380,7 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 			swtich(opcode)
 			{
 				case lw:
-					ALUsrc = 1;
+					
 					ALUctl = ADD;
 					MemWr = 1;
 					MemToReg = 1;
