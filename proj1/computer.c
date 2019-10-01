@@ -377,10 +377,9 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 			/*
 				An example.
 			*/
-			swtich(opcode)
+			switch(opcode)
 			{
 				case lw:
-					
 					ALUctl = ADD;
 					MemWr = 1;
 					MemToReg = 1;
@@ -681,9 +680,105 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 {
 	/* Your code goes here */
 
+	// if its an R-format
+	if(d->op == 0)
+	{
+		switch(ALUctl)
+		{
+			case ADD:	// For ADD, branch etc.
+
+			break;
+
+			case SUB:
 
 
 
+			break;
+
+			case OR:	// For OR , NOR, and XOR instruction
+				// Or: rd = rs | rt
+				rVals->R_rt = d->regs.r.rt;
+				rVals->R_rs = d->regs.r.rs;
+
+				switch(d->regs.r.funct)
+				{
+					case or:
+						rVals->R_rd = rVals->R_rs | rVals->R_rt;
+					break;
+
+					case nor:
+						rVals->R_rd = ~(rVals->R_rs | rVals->R_rt);
+					break;
+
+					case xor:
+
+					break;
+				}
+			break;
+
+			case AND: // For AND instruction
+				rVals->R_rt = d->regs.r.rt;
+				rVals->R_rs = d->regs.r.rs;
+				rVals->R_rd = rVals->R_rs & rVals->R_rt;
+			break;
+		}
+	}
+	else 
+	{
+
+		switch(ALUctl)
+		{
+			case ADD:	// For ADD, branch etc.
+
+			break;
+
+			case SUB:
+				if(d->op == beq || d->op == bne) {
+					rVals->R_rt = d->regs.i.rt;
+					rVals->R_rs = d->regs.i.rs;
+
+					result = rVals->R_rt - rVals->R_rs;
+					if(result == 0 )
+					{
+						//UpdatePC();
+					}
+					else if(d->op == bne)
+					{
+						//UpdatePC();
+					}
+				}
+				
+			break;
+
+			case OR:	// For OR , NOR, and XOR instruction
+				// Or: rd = rs | rt
+				rVals->R_rt = d->regs.i.rt;
+				rVals->R_rs = d->regs.i.rs;
+				int immediate = d->regs.i.addr_or_immed;
+
+				switch(d->regs.r.funct)
+				{
+					case or:
+						rVals->R_rt = rVals->R_rs | addr_or_immed;
+					break;
+
+					case nor:
+						rVals->R_rt = ~(rVals->R_rs | addr_or_immed);
+					break;
+
+					case xor:
+
+					break;
+				}
+			break;
+
+			case AND: // For AND instruction
+				rVals->R_rt = d->regs.r.rt;
+				rVals->R_rs = d->regs.r.rs;
+				rVals->R_rd = rVals->R_rs & rVals->R_rt;
+			break;
+		}
+	}
 
 	return 0;
 }
