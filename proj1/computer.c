@@ -414,7 +414,7 @@ void PrintInstruction(DecodedInstr *d)
 	//printf("%d\n", d->op);
 	//printf("R: %d\n", d->regs.r.funct);
 
-	if (d->op == 0)
+	if (d->type == R)
 	{
 		//printf("R: %d\n", d->regs.r.funct);
 		switch (d->regs.r.funct)
@@ -456,7 +456,7 @@ void PrintInstruction(DecodedInstr *d)
 			break;
 		}
 	}
-	else
+	else if (d->type == I)
 	{
 		switch (d->op)
 		{
@@ -494,6 +494,15 @@ void PrintInstruction(DecodedInstr *d)
 			strcpy(instr, "sw");
 			break;
 
+		default: // gets triggered if theres an unsupported code
+			supported_instr = 0;
+			break;
+		}
+	}
+	else
+	{
+		switch (d->op)
+		{
 		case jal:
 			strcpy(instr, "jal");
 			break;
@@ -520,6 +529,10 @@ void PrintInstruction(DecodedInstr *d)
 		{
 			printf("%s $%d, $%d, %d\n", instr, d->regs.r.rd, d->regs.r.rs, d->regs.r.shamt);
 		}
+		else if (d->regs.r.funct == jr)
+		{
+			printf("%s $%d\n", instr, 31);
+		}
 		else
 		{
 			printf("%s $%d, $%d, $%d\n", instr, d->regs.r.rd, d->regs.r.rs, d->regs.r.rt);
@@ -527,9 +540,11 @@ void PrintInstruction(DecodedInstr *d)
 	}
 	else if (d->type == I)
 	{
+		printf("%s $%d, $%d, %d\n", instr, d->regs.i.rt, d->regs.i.rs, d->regs.i.addr_or_immed);
 	}
 	else if (d->type == J)
 	{
+		printf("%s 0x00%x\n", instr, d->regs.j.target);
 	}
 
 	free(instr);
@@ -547,31 +562,31 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 		{
 
 		case addu:
-			rVals->R_rd = rVals->R_rs + rVals->R_rt;
+			mips.registers[d->regs.r.rd] = rVals->R_rd = rVals->R_rs + rVals->R_rt;
 			return 0;
 
 		case subu:
-			rVals->R_rd = rVals->R_rs - rVals->R_rt;
+			mips.registers[d->regs.r.rd] = rVals->R_rd = rVals->R_rs - rVals->R_rt;
 			return 0;
 
 		case sll:
-			rVals->R_rd = rVals->R_rt << d->regs.r.shamt;
+			mips.registers[d->regs.r.rd] = rVals->R_rd = rVals->R_rt << d->regs.r.shamt;
 			return 0;
 
 		case srl:
-			rVals->R_rd = rVals->R_rt >> d->regs.r.shamt;
+			mips.registers[d->regs.r.rd] = rVals->R_rd = rVals->R_rt >> d->regs.r.shamt;
 			return 0;
 
 		case and:
-			rVals->R_rd = rVals->R_rs & rVals->R_rt;
+			mips.registers[d->regs.r.rd] = rVals->R_rd = rVals->R_rs & rVals->R_rt;
 			return 0;
 
 		case or:
-			rVals->R_rd = rVals->R_rs | rVals->R_rt;
+			mips.registers[d->regs.r.rd] = rVals->R_rd = rVals->R_rs | rVals->R_rt;
 			return 0;
 
 		case slt:
-			rVals->R_rd = (rVals->R_rs < rVals->R_rt) ? 1 : 0;
+			mips.registers[d->regs.r.rd] = rVals->R_rd = (rVals->R_rs < rVals->R_rt) ? 1 : 0;
 			return 0;
 
 		case jr:
@@ -584,15 +599,15 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 		{
 
 		case addiu:
-			rVals->R_rt = rVals->R_rs + d->regs.i.addr_or_immed;
+			mips.registers[d->regs.i.rt] = rVals->R_rt = rVals->R_rs + d->regs.i.addr_or_immed;
 			return 0;
 
 		case andi:
-			rVals->R_rt = rVals->R_rs & d->regs.i.addr_or_immed;
+			mips.registers[d->regs.i.rt] = rVals->R_rt = rVals->R_rs & d->regs.i.addr_or_immed;
 			return 0;
 
 		case ori:
-			rVals->R_rt = rVals->R_rs | d->regs.i.addr_or_immed;
+			mips.registers[d->regs.i.rt] = rVals->R_rt = rVals->R_rs | d->regs.i.addr_or_immed;
 			return 0;
 		case lui:
 			return 0;
@@ -647,7 +662,7 @@ void UpdatePC(DecodedInstr *d, int val)
 	{
 		mips.pc = val;
 	}
-	else if (d->op == 0 && d->regs.r.funct == jr)
+	else if (d->type == R && d->regs.r.funct == jr)
 	{
 		mips.pc = mips.registers[31];
 	}
@@ -677,5 +692,27 @@ int Mem(DecodedInstr *d, int val, int *changedMem)
  */
 void RegWrite(DecodedInstr *d, int val, int *changedReg)
 {
-	/* Your code goes here */
+	if (d->type == J)
+	{
+		if (d->op == jal)
+		{
+			*changedReg = 31;
+			return;
+		}
+	}
+	if (d->type == R)
+	{
+		if (d->regs.r.funct != bne || d->regs.r.funct != beq)
+		{
+			*changedReg = d->regs.r.rd;
+			return;
+		}
+	}
+	if (d->type == I)
+	{
+		*changedReg = d->regs.r.rt;
+		return;
+	}
+
+	*changedReg = -1;
 }
