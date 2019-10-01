@@ -540,7 +540,12 @@ void PrintInstruction(DecodedInstr *d)
 	}
 	else if (d->type == I)
 	{
-		printf("%s $%d, $%d, %d\n", instr, d->regs.i.rt, d->regs.i.rs, d->regs.i.addr_or_immed);
+		if (d->op == bne || d->op == beq)
+		{
+			printf("%s $%d, $%d, 0x00%x\n", instr, d->regs.i.rs, d->regs.i.rt, 4 * d->regs.i.addr_or_immed + mips.pc + 4);
+		}
+		else
+			printf("%s $%d, $%d, %d\n", instr, d->regs.i.rs, d->regs.i.rt, d->regs.i.addr_or_immed);
 	}
 	else if (d->type == J)
 	{
@@ -638,7 +643,7 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 	{
 		if (d->op == jal)
 		{
-			mips.registers[31] = mips.pc;
+			mips.registers[31] = mips.pc + 4;
 			return d->regs.j.target;
 		}
 		return d->regs.j.target;
@@ -665,6 +670,10 @@ void UpdatePC(DecodedInstr *d, int val)
 	else if (d->type == R && d->regs.r.funct == jr)
 	{
 		mips.pc = mips.registers[31];
+	}
+	else if (d->type == R && (d->regs.r.funct == beq || d->regs.r.funct == bne))
+	{
+		mips.pc += (4 * val) + 4;
 	}
 }
 
