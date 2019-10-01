@@ -57,14 +57,6 @@ typedef struct
 } RegVals;
 
 
-typedef struct {
-
-	int nPC_sel;
-	
-
-} Control;
-
-
 void InitComputer(FILE *, int printingRegisters, int printingMemory,
 									int debugging, int interactive);
 void Simulate();

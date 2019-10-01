@@ -77,9 +77,36 @@ const unsigned int 	add = 0x20,
 					sub = 0x22,
 					subu = 0x23;
 
-/*  
-	opcodes for R-format
+
+/*
+
+	Implementing Control
+
 */
+enum ALUctlInputs {
+	ADD = 0,
+	SUB,
+	OR,
+	AND
+};
+
+enum RegDst {
+	Rt = 0,
+	Rd
+};
+
+/*
+	
+	Doing this to eliminate unecessary (what i mean ALOT of) if-elseif-else statements when we start to implement the ALU (execute function)..
+
+*/
+
+int ALUctl = -1; 	// determined by the ALUctlInputs
+int RegDst = -1;
+int ALUsrc = -1;	// 0 for an register input, 1 for an immediate input
+int ExtOp = -1;
+int MemWr = -1;
+int MemToReg = -1;	//
 
 /*
  *  Return an initialized computer with the stack pointer set to the
@@ -283,6 +310,19 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 	unsigned int opcode = instr >> 26;
 	//printf("size: %d\n", opcode);
 
+	/*
+		
+		Reset the control everytime a new instruction is loaded.
+
+	*/
+
+	ALUctl = -1; 	// determined by the ALUctlInputs
+	RegDst = -1;
+	ALUsrc = -1;	// 0 for an register input, 1 for an immediate input
+	ExtOp = -1;
+	MemWr = -1;
+	MemToReg = -1;	//
+
 
 	if (opcode == 0)
 		format = 'R';
@@ -306,6 +346,18 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 			d->regs.r.funct = (instr << 26) >> 26;
 			//printf("%d\n", (instr << 26) >> 26);
 			//PrintInstruction(d);
+			if(d->regs.r.funct == jr) 
+			{
+				/*
+					(mips.pc + 4) << 4
+					iiiiiiiiiiiiiiiiiiiiiiiiiiii0000
+
+					((mips.pc + 4) << 4) >> 6
+					000000iiiiiiiiiiiiiiiiiiiiiiiiii
+				*/
+				d->regs.r.rs = ((mips.pc + 4) << 4) >> 6;
+				UpdatePC(d, mips.registers[31]);
+			}
 			break;
 
 		case 'I':
@@ -314,11 +366,28 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 				opcode, rs, rt, immediate
 			*/
 			d->op = opcode;
-			printf("I: %d\n", opcode);
+			//printf("I: %d\n", opcode);
 			d->regs.i.rs = (instr << 6) >> 27;
 			d->regs.i.rt = (instr << 11) >> 27;
 			d->regs.i.addr_or_immed = (instr << 16) >> 16;
 			//PrintInstruction(d);
+
+
+			/*
+				An example.
+			*/
+			swtich(opcode)
+			{
+				case lw:
+					ALUsrc = 1;
+					ALUctl = ADD;
+					MemWr = 1;
+					MemToReg = 1;
+					ExtOp = 1; // Signed
+					RegDst = Rt;
+				break;
+			}
+
 			break;
 		case 'J': 
 			/*
@@ -350,23 +419,23 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 			d->op = opcode;
 			int curr_pc = (mips.pc >> 28) << 28;
 
-			int target_pc = ((instr << 8) >> 4) | curr_pc;
+			int target_pc = ((instr << 6) >> 4) | curr_pc;
 
 
 			d->regs.j.target = target_pc;
-			if(opcode == jal) 
-			{
-				/*
-					(mips.pc + 4) << 4
-					iiiiiiiiiiiiiiiiiiiiiiiiiiii0000
 
-					((mips.pc + 4) << 4) >> 6
-					000000iiiiiiiiiiiiiiiiiiiiiiiiii
-				*/
-				d->regs.r.rs = ((mips.pc + 4) << 4) >> 6;
+			if(opcode == jal || opcode == jump )
+			{
+				if(opcode == jal){
+					mips.registers[31] = mips.pc+=4;
+				}
+				UpdatePC(d, target_pc);
+
 			}
+
+			
 			//PrintInstruction(d);
-			UpdatePC(d, d->regs.j.target);
+			//UpdatePC(d, d->regs.j.target);
 			break;
 
 		default:
@@ -387,12 +456,12 @@ void PrintInstruction(DecodedInstr *d)
 	int supported_instr = 1;
 
 
-	printf("%d\n", d->op);
-	printf("R: %d\n", d->regs.r.funct);
+	//printf("%d\n", d->op);
+	//printf("R: %d\n", d->regs.r.funct);
 
 	if(d->op == 0)
 	{
-		printf("R: %d\n", d->regs.r.funct);
+		//printf("R: %d\n", d->regs.r.funct);
 		switch(d->regs.r.funct) 
 		{
 			case add:
@@ -492,7 +561,7 @@ void PrintInstruction(DecodedInstr *d)
 	{
 		switch(d->op)
 		{
-			printf("%d\n", d->op);
+			//printf("%d\n", d->op);
 			case addi:
 				strcpy(instr, "addi");
 			break;
@@ -586,11 +655,11 @@ void PrintInstruction(DecodedInstr *d)
 	{
 		if(d->regs.r.funct == sll || d->regs.r.funct == srl)
 		{
-			printf("%s $%d, $%d, %d", instr, d->regs.r.rd, d->regs.r.rs, d->regs.r.shamt);
+			printf("%s $%d, $%d, %d\n", instr, d->regs.r.rd, d->regs.r.rs, d->regs.r.shamt);
 		}
 		else 
 		{
-			printf("%s $%d, $%d, $%d", instr, d->regs.r.rd, d->regs.r.rs, d->regs.r.rt);
+			printf("%s $%d, $%d, $%d\n", instr, d->regs.r.rd, d->regs.r.rs, d->regs.r.rt);
 		}
 		
 	}
@@ -609,8 +678,12 @@ void PrintInstruction(DecodedInstr *d)
 /* Perform computation needed to execute d, returning computed value */
 int Execute(DecodedInstr *d, RegVals *rVals)
 {
-
 	/* Your code goes here */
+
+
+
+
+
 	return 0;
 }
 
@@ -621,23 +694,17 @@ int Execute(DecodedInstr *d, RegVals *rVals)
  */
 void UpdatePC(DecodedInstr *d, int val)
 {
-	if(val>0){ 
-		mips.pc = (val+0x00400000)/4;
-	}
+
 	mips.pc += 4;
 	/* Your code goes here */
 
-	if(d->op == jump) 
+	if(d->op == jump || d->op == jal) 
 	{
-		mips.pc = val;
-	}
-	else if (d->op == jal) 
-	{
-		mips.pc = val;
+		mips.pc = d->regs.j.target;
 	}
 	else if (d->op == 0 && d->regs.r.funct == jr) 
 	{
-		mips.pc = d->regs.r.rs;
+		mips.pc = val;
 	}
 }
 

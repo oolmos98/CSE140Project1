@@ -33,12 +33,12 @@
 
 Mystery:
 	addiu	$v0,$0,0
-	bne	$a0,$s0,Loop
+	#bne	$a0,$s0,Loop
 	addiu	$0,$0,0	#Should never execute
 Loop:
-	beq	$a0,$0,Done
+	#beq	$a0,$0,Done
 	addu	$v0,$v0,$a1
 	addiu	$a0,$a0,-1
-	j	Loop
+	#j	Loop
 Done:
 	jr	$ra
