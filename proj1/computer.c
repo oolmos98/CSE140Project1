@@ -270,8 +270,18 @@ unsigned int Fetch(int addr)
 void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 {
 	char format;
-	int opcode = instr >> 26;
-	printf("%d\n", opcode);
+	/*
+		
+		xxxxxxyyyyyyyyyyyyyyyyyyyyyyyyyy
+
+		instr << 26
+
+		00000000000000000000000000xxxxxx
+	
+	*/
+	//printf("instr: %d\n", instr);
+	unsigned int opcode = instr >> 26;
+	//printf("size: %d\n", opcode);
 
 
 	if (opcode == 0)
@@ -294,7 +304,7 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 			d->regs.r.rd = rVals->R_rd = (instr << 16) >> 27;
 			d->regs.r.shamt = (instr << 21) >> 27;
 			d->regs.r.funct = (instr << 26) >> 26;
-			printf("%d\n", (instr << 26) >> 26);
+			//printf("%d\n", (instr << 26) >> 26);
 			//PrintInstruction(d);
 			break;
 
@@ -304,6 +314,7 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 				opcode, rs, rt, immediate
 			*/
 			d->op = opcode;
+			printf("I: %d\n", opcode);
 			d->regs.i.rs = (instr << 6) >> 27;
 			d->regs.i.rt = (instr << 11) >> 27;
 			d->regs.i.addr_or_immed = (instr << 16) >> 16;
@@ -320,7 +331,7 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 				xxxxxxyyyyyyyyyyyyyyyyyyyyyyyyyy
 
 				instr << 8;
-				yyyyyyyyyyyyyyyyyyyyyyyyyy00
+				yyyyyyyyyyyyyyyyyyyyyyyyyy000000
 
 				instr >> 4;
 
@@ -375,8 +386,13 @@ void PrintInstruction(DecodedInstr *d)
 	char* instr = (char*)malloc(sizeof(char)*5);
 	int supported_instr = 1;
 
+
+	printf("%d\n", d->op);
+	printf("R: %d\n", d->regs.r.funct);
+
 	if(d->op == 0)
 	{
+		printf("R: %d\n", d->regs.r.funct);
 		switch(d->regs.r.funct) 
 		{
 			case add:
@@ -476,6 +492,7 @@ void PrintInstruction(DecodedInstr *d)
 	{
 		switch(d->op)
 		{
+			printf("%d\n", d->op);
 			case addi:
 				strcpy(instr, "addi");
 			break;
@@ -549,7 +566,7 @@ void PrintInstruction(DecodedInstr *d)
 			break;
 
 			case jump:
-				strcpy(instr, "jump");
+				strcpy(instr, "j");
 			break;
 
 			default: // gets triggered if theres an unsupported code
@@ -605,7 +622,7 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 void UpdatePC(DecodedInstr *d, int val)
 {
 	if(val>0){ 
-		//mips.pc = (val+0x00400000)/4;
+		mips.pc = (val+0x00400000)/4;
 	}
 	mips.pc += 4;
 	/* Your code goes here */
