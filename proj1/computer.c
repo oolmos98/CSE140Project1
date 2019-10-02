@@ -545,7 +545,7 @@ void PrintInstruction(DecodedInstr *d)
 			printf("%s $%d, $%d, 0x00%x\n", instr, d->regs.i.rs, d->regs.i.rt, 4 * d->regs.i.addr_or_immed + mips.pc + 4);
 		}
 		else
-			printf("%s $%d, $%d, %d\n", instr, d->regs.i.rs, d->regs.i.rt, d->regs.i.addr_or_immed);
+			printf("%s $%d, $%d, %d\n", instr, d->regs.i.rt, d->regs.i.rs, d->regs.i.addr_or_immed);
 	}
 	else if (d->type == J)
 	{
@@ -565,13 +565,12 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 	{
 		switch (d->regs.r.funct)
 		{
-
 		case addu:
-			mips.registers[d->regs.r.rd] = rVals->R_rd = rVals->R_rs + rVals->R_rt;
+			mips.registers[d->regs.r.rd] = rVals->R_rd = rVals->R_rs + (unsigned)rVals->R_rt;
 			return 0;
 
 		case subu:
-			mips.registers[d->regs.r.rd] = rVals->R_rd = rVals->R_rs - rVals->R_rt;
+			mips.registers[d->regs.r.rd] = rVals->R_rd = rVals->R_rs - (unsigned)rVals->R_rt;
 			return 0;
 
 		case sll:
@@ -618,14 +617,14 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 			return 0;
 
 		case beq:
-			if (rVals->R_rt == rVals->R_rs)
+			if ((rVals->R_rt - rVals->R_rs) == 0)
 			{
 				return d->regs.i.addr_or_immed;
 			}
 			return 0;
 
 		case bne:
-			if (rVals->R_rt != rVals->R_rs)
+			if (mips.registers[rVals->R_rt] - mips.registers[rVals->R_rs] != 0)
 			{
 				return d->regs.i.addr_or_immed;
 			}
@@ -665,7 +664,7 @@ void UpdatePC(DecodedInstr *d, int val)
 
 	if (d->op == jump || d->op == jal)
 	{
-		mips.pc = val;
+		mips.pc = val + 4;
 	}
 	else if (d->type == R && d->regs.r.funct == jr)
 	{
