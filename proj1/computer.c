@@ -24,15 +24,15 @@ RegVals rVals;
 	opcodes for I-format
 */
 const unsigned int andi = 0x0C,
-									 addiu = 0x09,
-									 beq = 0x04,
-									 bne = 0x05,
-									 bgtz = 0x07,
-									 lui = 0x0F,
-									 lw = 0x23,
-									 ori = 0x0D,
-									 sw = 0x2B;
-/*  
+					 addiu = 0x09,
+					 beq = 0x04,
+					 bne = 0x05,
+					 bgtz = 0x07,
+					 lui = 0x0F,
+					 lw = 0x23,
+					 ori = 0x0D,
+					 sw = 0x2B;
+	/*  
 	opcodes for J-format
 */
 const unsigned int jal = 0x03,
@@ -274,6 +274,7 @@ unsigned int Fetch(int addr)
 /* Decode instr, returning decoded instruction. */
 void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 {
+	printf("Calling Decode\n");
 	char format;
 	/*
 		
@@ -420,10 +421,6 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 		//PrintInstruction(d);
 		//UpdatePC(d, d->regs.j.target);
 		break;
-
-	default:
-
-		break;
 	}
 }
 
@@ -437,6 +434,7 @@ void PrintInstruction(DecodedInstr *d)
 	// Check if the instruction is R-foarmat
 	char *instr = (char *)malloc(sizeof(char) * 5);
 	int supported_instr = 1;
+	
 
 	//printf("%d\n", d->op);
 	//printf("R: %d\n", d->regs.r.funct);
@@ -446,40 +444,39 @@ void PrintInstruction(DecodedInstr *d)
 		//printf("R: %d\n", d->regs.r.funct);
 		switch (d->regs.r.funct)
 		{
-		case addu:
-			strcpy(instr, "addu");
-			break;
+			case addu:
+				strcpy(instr, "addu");
+				break;
 
-		case and:
-			strcpy(instr, "and");
-			break;
+			case and:
+				strcpy(instr, "and");
+				break;
 
-		case jr:
-			strcpy(instr, "jr");
-			break;
+			case jr:
+				strcpy(instr, "jr");
+				break;
 
-		case or:
-			strcpy(instr, "or");
-			break;
+			case or:
+				strcpy(instr, "or");
+				break;
 
-		case slt:
-			strcpy(instr, "slt");
-			break;
+			case slt:
+				strcpy(instr, "slt");
+				break;
 
-		case sll:
-			strcpy(instr, "sll");
-			break;
+			case sll:
+				strcpy(instr, "sll");
+				break;
 
-		case srl:
-			strcpy(instr, "srl");
-			break;
+			case srl:
+				strcpy(instr, "srl");
+				break;
 
-		case subu:
-			strcpy(instr, "subu");
-			break;
-
-		default: // gets triggered if theres an unsupported code
-			supported_instr = 0;
+			case subu:
+				strcpy(instr, "subu");
+				break;
+			default: // gets triggered if theres an unsupported code
+				supported_instr = 0;
 			break;
 		}
 	}
@@ -519,27 +516,27 @@ void PrintInstruction(DecodedInstr *d)
 
 		case sw:
 			strcpy(instr, "sw");
-			break;
+			break; 
 
 		default: // gets triggered if theres an unsupported code
 			supported_instr = 0;
-			break;
-		}
+		break;
+		} 	
 	}
 	else
 	{
 		switch (d->op)
 		{
-		case jal:
-			strcpy(instr, "jal");
-			break;
+			case jal:
+				strcpy(instr, "jal");
+				break;
 
-		case jump:
-			strcpy(instr, "j");
-			break;
+			case jump:
+				strcpy(instr, "j");
+				break;
 
-		default: // gets triggered if theres an unsupported code
-			supported_instr = 0;
+			default: // gets triggered if theres an unsupported code
+				supported_instr = 0;
 			break;
 		}
 	}
@@ -585,6 +582,7 @@ void PrintInstruction(DecodedInstr *d)
 /* Perform computation needed to execute d, returning computed value */
 int Execute(DecodedInstr *d, RegVals *rVals)
 {
+	printf("Calling Execute\n");
 	/* Your code goes here */
 
 	// if its an R-format
@@ -632,7 +630,7 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 
 		case addiu:
 			mips.registers[d->regs.i.rt] = mips.registers[rVals->R_rt] = mips.registers[rVals->R_rs] + d->regs.i.addr_or_immed;
-			printf("R_rt: %d\nR_rs: %d\n\n\n", mips.registers[rVals->R_rt], mips.registers[rVals->R_rs]);
+			//printf("R_rt: %d\nR_rs: %d\n\n\n", mips.registers[rVals->R_rt], mips.registers[rVals->R_rs]);
 			return 0;
 
 		case andi:
@@ -646,11 +644,11 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 			return 0;
 
 		case beq:
-			//printf("R_rt: %d\nR_rs: %d\n\n\n", rVals->R_rt, rVals->R_rs);
+			//printf("R_rt: %d\nR_rs: %d\n\n\n", mips.registers[rVals->R_rt], mips.registers[rVals->R_rs]);
 			if (mips.registers[rVals->R_rt] == mips.registers[rVals->R_rs])
 			{
-				//printf("BEQ Output: %d\n\n\n", rVals->R_rt - rVals->R_rs);
-				return mips.pc + ( (4 * d->regs.i.addr_or_immed ) + 4);
+				//printf("BEQ Output: %d\n\n\n", ( (4 * d->regs.i.addr_or_immed ) + 4));
+				return ( (4 * d->regs.i.addr_or_immed ) );
 			}
 			return 0;
 
@@ -662,7 +660,7 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 			return 0;
 
 		case lw:
-			return 0;
+			return (mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed/4+1)* 4);
 
 		case sw:
 			return 0;
@@ -673,9 +671,9 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 	{
 		if (d->op == jal)
 		{
-			mips.registers[31] = mips.pc;
+			mips.registers[31] = mips.pc + 4;
 			return d->regs.j.target;
-		}
+		} 
 		return d->regs.j.target;
 	}
 
@@ -689,22 +687,26 @@ int Execute(DecodedInstr *d, RegVals *rVals)
  */
 void UpdatePC(DecodedInstr *d, int val)
 {
-
+	printf("Calling UpdatePC\n");
 	mips.pc += 4;
-	/* Your code goes here */
-
-	if (d->op == jump || d->op == jal)
+	if (d->type == J && (d->op == jump || d->op == jal))
 	{
 		mips.pc = val;
 	}
-	else if (d->type == R && d->regs.r.funct == jr)
+	if (d->type == R && d->regs.r.funct == jr)
 	{
 		mips.pc = mips.registers[31];
 	}
-	else if (d->type == R && (d->regs.r.funct == beq || d->regs.r.funct == bne))
+	if (d->type == I && (d->op == beq || d->op == bne))
 	{
-		mips.pc = val;
+		if(val > 0) {
+			//printf("Called\n\n");
+			mips.pc += val;
+		}
 	}
+
+	
+	/* Your code goes here */
 }
 
 /*
@@ -715,11 +717,23 @@ void UpdatePC(DecodedInstr *d, int val)
  * Remember that we're mapping MIPS addresses to indices in the mips.memory 
  * array. mips.memory[0] corresponds with address 0x00400000, mips.memory[1] 
  * with address 0x00400004, and so forth.
- *
+ * 
  */
 int Mem(DecodedInstr *d, int val, int *changedMem)
 {
 	/* Your code goes here */
+	printf("Calling Mem\n");
+	
+	if(d->op == sw)
+	{
+		if(val < 0x00401000 || val > 0x00403fff)
+		{
+			printf("Memory Access Exception at %8.8x: address %8.8x\n", mips.pc, val);
+			*changedMem = -1;
+			exit(0);
+		}
+		*changedMem = d->regs.i.rt;
+	}
 	return 0;
 }
 
@@ -731,26 +745,32 @@ int Mem(DecodedInstr *d, int val, int *changedMem)
  */
 void RegWrite(DecodedInstr *d, int val, int *changedReg)
 {
+	printf("Calling RegWrite\n");
 	if (d->type == J)
 	{
 		if (d->op == jal)
 		{
 			*changedReg = 31;
+			mips.registers[31] = val;
 			return;
 		}
 	}
 	if (d->type == R)
 	{
-		if (d->regs.r.funct != bne || d->regs.r.funct != beq)
-		{
+		if(d->regs.r.funct != jr) {
 			*changedReg = d->regs.r.rd;
-			return;
 		}
+		return;
 	}
 	if (d->type == I)
 	{
-		*changedReg = d->regs.r.rt;
-		return;
+		if (d->op != bne || d->op != beq)
+		{
+			*changedReg = d->regs.i.rt;
+			mips.registers[*changedReg] = val;
+			return;
+		}
+
 	}
 
 	*changedReg = -1;
