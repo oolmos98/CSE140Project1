@@ -89,3 +89,4 @@ New pc = 0040000c
 No register was updated.
 No memory location was updated.
 Executing instruction at 0040000c: 20000000
+Unsupported instruction found. Terminating program

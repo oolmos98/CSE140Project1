@@ -38,14 +38,14 @@
 
 # Find test files that exist in testfiles/ and put their numbers in an array.
 # Ex: o1 o10 o3 -> tests=(1 10 3)
-tests=(); for v in `find testfiles/o*`; do tests+=(${v:11}); done
+tests=(); for v in `find sample.output`; do tests+=(${v:1}); done
 # Sort them. Ex: tests=(1 3 10)
-tests=($(printf '%d\n' ${tests[@]} | sort -n))
+#tests=($(printf '%d\n' ${tests[@]} | sort -n))
 
 # Apply a.exe to each test file and count how many are correct.
 correct=0;
 for i in ${tests[@]}; do
-  ./a.exe < ./testfiles/t$i | diff -q ./testfiles/o$i - > /dev/null
+  ./sim sample.dump | diff -q sample.output - > /dev/null
   if [ "$?" -eq 0 ] ; then # if exit code is 0 then correct
     echo "Test $i: correct."
     ((correct=correct+1))
