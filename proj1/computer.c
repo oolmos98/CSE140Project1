@@ -59,33 +59,6 @@ const unsigned int
 	Implementing Control
 
 */
-enum ALUctlInputs
-{
-	ADD = 0,
-	SUB,
-	OR,
-	AND
-};
-
-enum RegDst
-{
-	Rt = 0,
-	Rd
-};
-
-/*
-	
-	Doing this to eliminate unecessary (what i mean ALOT of) if-elseif-else statements when we start to implement the ALU (execute function)..
-
-*/
-
-int ALUctl = -1; // determined by the ALUctlInputs
-int RegDst = -1;
-int ALUsrc = -1; // 0 for an register input, 1 for an immediate input
-int ExtOp = -1;
-int MemWr = -1;
-int MemToReg = -1; //
-
 /*
  *  Return an initialized computer with the stack pointer set to the
  *  address of the end of data memory, the remaining registers initialized
@@ -295,13 +268,6 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 
 	*/
 
-	ALUctl = -1; // determined by the ALUctlInputs
-	RegDst = -1;
-	ALUsrc = -1; // 0 for an register input, 1 for an immediate input
-	ExtOp = -1;
-	MemWr = -1;
-	MemToReg = -1; //
-
 	if (opcode == 0)
 		format = 'R';
 	else if (opcode == jump || opcode == jal)
@@ -363,22 +329,6 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 
 		//printf("Immediate: %d\n", d->regs.i.addr_or_immed);
 		// ALUsrc will always be in Immediate field
-		ALUsrc = 1;
-
-		/*
-				An example.
-			*/
-		switch (opcode)
-		{
-		case lw:
-			ALUctl = ADD;
-			MemWr = 1;
-			MemToReg = 1;
-			ExtOp = 1; // Signed
-			RegDst = Rt;
-			break;
-		}
-
 		break;
 	case 'J':
 		/*
@@ -513,6 +463,10 @@ void PrintInstruction(DecodedInstr *d)
 			strcpy(instr, "sw");
 			break;
 
+		case andi:
+			strcpy(instr, "andi");
+			break;
+
 		default: // gets triggered if theres an unsupported code
 			supported_instr = 0;
 			break;
@@ -562,6 +516,10 @@ void PrintInstruction(DecodedInstr *d)
 		if (d->op == bne || d->op == beq)
 		{
 			printf("%s $%d, $%d, 0x00%x\n", instr, d->regs.i.rs, d->regs.i.rt, mips.pc + ((4 * d->regs.i.addr_or_immed) + 4));
+		}
+		else if(d->op == lw || d->op == sw)
+		{
+			printf("%s $%d, %d($%d)\n", instr, d->regs.i.rt,  d->regs.i.addr_or_immed, d->regs.i.rs);
 		}
 		else
 			printf("%s $%d, $%d, %d\n", instr, d->regs.i.rt, d->regs.i.rs, d->regs.i.addr_or_immed);
@@ -657,10 +615,15 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 			//return 0;
 
 		case lw:
-			return (mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed / 4 + 1) * 4);
+			// Since our stack memory pointer is in the highest memory of our current program
+			// We are subtract our stack pointer by our immediate * 4.
+			return (mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed + 4));
 
 		case sw:
-			return 0;
+			// Since our stack memory pointer is in the highest memory of our current program
+			// We are subtract our stack pointer by our immediate * 4.
+			//printf("Accessing Memory: 0x%8.8x\n",mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed ));
+			return (mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed + 4) );
 		}
 	}
 
@@ -721,15 +684,55 @@ int Mem(DecodedInstr *d, int val, int *changedMem)
 	/* Your code goes here */
 	//printf("Value in Memory: %d\n", val);
 
+	// Max size in mips.memory is 4,096
+	// So we can only access mips.memory[0] up to mips.memory[4095]
+	// 
+
+	*changedMem = -1;
+
+	// Given in the project's PDF under Mem.
+	int memoryLowerBound = 0x00401000,
+		memoryUpperBound = 0x00403FFF;
+
 	if (d->op == sw)
 	{
-		if (val < 0x00401000 || val > 0x00403fff)
+		// Prevent memory access in any address accessed out of the bounds 0x00401000 and
+		// 0x00403FFC
+
+		// Check if the value is out of bounds or if the user is inputting an offset that
+		// is not divisible by 4. Exit program if triggered
+		if (val < memoryLowerBound || val > memoryUpperBound || val % 4 != 0)
 		{
-			printf("Memory Access Exception at %8.8x: address %8.8x\n", mips.pc, val);
+			printf("Memory Access Exception at 0x%8.8x: address 0x%8.8x\n", mips.pc, val);
 			*changedMem = -1;
 			exit(0);
 		}
-		*changedMem = d->regs.i.rt;
+
+		// mips.registers[29] = 0x00400000 + (MAXNUMINSTRS + MAXNUMDATA) * 4;
+		// Update Memory because you accessed and changed memory
+		*changedMem = val;
+
+		int memoryIndex = (val - 0x00400000)/4;
+
+		mips.memory[memoryIndex] = mips.registers[d->regs.i.rt];
+	}
+	if(d->op == lw)
+	{
+		// Prevent memory access in any address accessed out of the bounds 0x00401000 and
+		// 0x00403FFC
+		if (val < memoryLowerBound || val > memoryUpperBound)
+		{
+			printf("Memory Access Exception at 0x%8.8x: address 0x%8.8x\n", mips.pc, val);
+			*changedMem = -1;
+			exit(0);
+		}
+		// Load word doesn't change memory, it only access it.
+		*changedMem = -1;
+
+		int memoryIndex = (val - 0x00400000)/4;
+
+		val = mips.memory[memoryIndex];
+
 	}
 	return val;
 }
@@ -763,11 +766,10 @@ void RegWrite(DecodedInstr *d, int val, int *changedReg)
 	}
 	if (d->type == I)
 	{
-		if (d->op != bne || d->op != beq)
+		if (d->op != bne || d->op != beq || d->op != sw)
 		{
 			*changedReg = d->regs.i.rt;
 			mips.registers[*changedReg] = val;
-
 			//return;
 		}
 		else
