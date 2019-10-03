@@ -770,7 +770,9 @@ void RegWrite(DecodedInstr *d, int val, int *changedReg)
 
 			//return;
 		}
+		else
+			*changedReg = -1;
 	}
 
-	*changedReg = -1;
+	//*changedReg = -1;
 }
