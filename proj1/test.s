@@ -3,7 +3,7 @@
 	addiu 	$a0,$0,3
 	addiu 	$a1,$0,2
 
-	lui 	$t2,0x8FFF
+	lui 	$t2,0x00FF
 	srl 	$t2,$t2,30
 	sll 	$t2,$t2,2
 	addu 	$t3,$a1,$a0

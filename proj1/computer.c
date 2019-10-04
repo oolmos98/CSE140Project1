@@ -594,7 +594,7 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 			//mips.registers[d->regs.i.rt] = mips.registers[rVals->R_rs] | d->regs.i.addr_or_immed;
 			return mips.registers[rVals->R_rs] | d->regs.i.addr_or_immed;
 		case lui:
-			return 0;
+			return d->regs.i.addr_or_immed << 16;
 
 		case beq:
 			//printf("R_rt: %d\nR_rs: %d\n\n\n", mips.registers[d->regs.i.rt], mips.registers[d->regs.i.rs]);
@@ -720,7 +720,7 @@ int Mem(DecodedInstr *d, int val, int *changedMem)
 	{
 		// Prevent memory access in any address accessed out of the bounds 0x00401000 and
 		// 0x00403FFC
-		if (val < memoryLowerBound || val > memoryUpperBound)
+		if (val < memoryLowerBound || val > memoryUpperBound || val % 4 != 0)
 		{
 			printf("Memory Access Exception at 0x%8.8x: address 0x%8.8x\n", mips.pc, val);
 			*changedMem = -1;
