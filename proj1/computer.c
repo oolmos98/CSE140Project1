@@ -267,6 +267,9 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 		Reset the control everytime a new instruction is loaded.
 
 	*/
+	rVals->R_rs = 0;
+	rVals->R_rt = 0;
+	rVals->R_rd = 0;
 
 	if (opcode == 0)
 		format = 'R';
@@ -517,9 +520,9 @@ void PrintInstruction(DecodedInstr *d)
 		{
 			printf("%s $%d, $%d, 0x00%x\n", instr, d->regs.i.rs, d->regs.i.rt, mips.pc + ((4 * d->regs.i.addr_or_immed) + 4));
 		}
-		else if(d->op == lw || d->op == sw)
+		else if (d->op == lw || d->op == sw)
 		{
-			printf("%s $%d, %d($%d)\n", instr, d->regs.i.rt,  d->regs.i.addr_or_immed, d->regs.i.rs);
+			printf("%s $%d, %d($%d)\n", instr, d->regs.i.rt, d->regs.i.addr_or_immed, d->regs.i.rs);
 		}
 		else
 			printf("%s $%d, $%d, %d\n", instr, d->regs.i.rt, d->regs.i.rs, d->regs.i.addr_or_immed);
@@ -545,34 +548,45 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 		{
 		case addu:
 			//mips.registers[d->regs.r.rd] = mips.registers[rVals->R_rs] + mips.registers[rVals->R_rt];
+			//	printf("R_rt: %d\nR_rs: %d\n\n\n", mips.registers[rVals->R_rt], mips.registers[rVals->R_rs]);
+
 			return mips.registers[rVals->R_rs] + mips.registers[rVals->R_rt];
+			break;
 
 		case subu:
 			//	mips.registers[d->regs.r.rd] = mips.registers[rVals->R_rs] - mips.registers[rVals->R_rt];
 			return mips.registers[rVals->R_rs] - mips.registers[rVals->R_rt];
+			break;
 
 		case sll:
 			//mips.registers[d->regs.r.rd] = mips.registers[rVals->R_rt] << d->regs.r.shamt;
 			return mips.registers[rVals->R_rt] << d->regs.r.shamt;
+			break;
 
 		case srl:
 			//mips.registers[d->regs.r.rd] = mips.registers[rVals->R_rt] >> d->regs.r.shamt;
 			return mips.registers[rVals->R_rt] >> d->regs.r.shamt;
+			break;
 
 		case and:
 			//mips.registers[d->regs.r.rd] = mips.registers[rVals->R_rs] & mips.registers[rVals->R_rt];
 			return mips.registers[rVals->R_rs] & mips.registers[rVals->R_rt];
+			break;
 
 		case or:
 			//mips.registers[d->regs.r.rd] = mips.registers[rVals->R_rs] | mips.registers[rVals->R_rt];
 			return mips.registers[rVals->R_rs] | mips.registers[rVals->R_rt];
+			break;
 
 		case slt:
 			//mips.registers[d->regs.r.rd] = (mips.registers[rVals->R_rs] < mips.registers[rVals->R_rt]) ? 1 : 0;
 			return (mips.registers[rVals->R_rs] < mips.registers[rVals->R_rt]) ? 1 : 0;
+			break;
 
 		case jr:
 			return mips.registers[31];
+			break;
+
 			//return 0;
 		}
 	}
@@ -598,9 +612,11 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 
 		case beq:
 			//printf("R_rt: %d\nR_rs: %d\n\n\n", mips.registers[d->regs.i.rt], mips.registers[d->regs.i.rs]);
-			if (mips.registers[rVals->R_rt] == mips.registers[rVals->R_rs])
+			if (mips.registers[rVals->R_rt] - mips.registers[rVals->R_rs] == 0)
 			{
-				//printf("BEQ Output: %d\n\n\n", ( (4 * d->regs.i.addr_or_immed ) + 4));
+				//printf("R_rt: %d\nR_rs: %d\n\n\n", mips.registers[rVals->R_rt], mips.registers[rVals->R_rs]);
+
+				//printf("BEQ Output: %d\n\n\n", ((4 * d->regs.i.addr_or_immed)));
 				return ((4 * d->regs.i.addr_or_immed));
 			}
 			break;
@@ -618,12 +634,17 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 			// Since our stack memory pointer is in the highest memory of our current program
 			// We are subtract our stack pointer by our immediate * 4.
 			return (mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed + 4));
+			break;
 
 		case sw:
 			// Since our stack memory pointer is in the highest memory of our current program
 			// We are subtract our stack pointer by our immediate * 4.
 			//printf("Accessing Memory: 0x%8.8x\n",mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed ));
-			return (mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed + 4) );
+			return (mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed + 4));
+			break;
+
+		default:
+			return 0;
 		}
 	}
 
@@ -686,13 +707,13 @@ int Mem(DecodedInstr *d, int val, int *changedMem)
 
 	// Max size in mips.memory is 4,096
 	// So we can only access mips.memory[0] up to mips.memory[4095]
-	// 
+	//
 
 	*changedMem = -1;
 
 	// Given in the project's PDF under Mem.
 	int memoryLowerBound = 0x00401000,
-		memoryUpperBound = 0x00403FFF;
+			memoryUpperBound = 0x00403FFF;
 
 	if (d->op == sw)
 	{
@@ -712,11 +733,11 @@ int Mem(DecodedInstr *d, int val, int *changedMem)
 		// Update Memory because you accessed and changed memory
 		*changedMem = val;
 
-		int memoryIndex = (val - 0x00400000)/4;
+		int memoryIndex = (val - 0x00400000) / 4;
 
 		mips.memory[memoryIndex] = mips.registers[d->regs.i.rt];
 	}
-	if(d->op == lw)
+	if (d->op == lw)
 	{
 		// Prevent memory access in any address accessed out of the bounds 0x00401000 and
 		// 0x00403FFC
@@ -729,10 +750,9 @@ int Mem(DecodedInstr *d, int val, int *changedMem)
 		// Load word doesn't change memory, it only access it.
 		*changedMem = -1;
 
-		int memoryIndex = (val - 0x00400000)/4;
+		int memoryIndex = (val - 0x00400000) / 4;
 
 		val = mips.memory[memoryIndex];
-
 	}
 	return val;
 }
@@ -745,7 +765,13 @@ int Mem(DecodedInstr *d, int val, int *changedMem)
  */
 void RegWrite(DecodedInstr *d, int val, int *changedReg)
 {
-	//printf("Value in Regw: %d\n", val);
+	*changedReg = -1;
+	//If Value 0, nothing should happen
+	// if (val == 0)
+	// {
+	// 	return;
+	// }
+	//	printf("Value in Regw: %d\n", val);
 	if (d->type == J)
 	{
 		if (d->op == jal)
@@ -766,15 +792,17 @@ void RegWrite(DecodedInstr *d, int val, int *changedReg)
 	}
 	if (d->type == I)
 	{
-		if (d->op != bne || d->op != beq || d->op != sw)
+		if ((d->op == bne || d->op == beq || d->op == sw))
 		{
-			*changedReg = d->regs.i.rt;
-			mips.registers[*changedReg] = val;
-			//return;
+			return;
 		}
 		else
-			*changedReg = -1;
-	}
+		{
+			//	printf("Updated RT: %d\n", val);
 
+			*changedReg = d->regs.i.rt;
+			mips.registers[*changedReg] = val;
+		}
+	}
 	//*changedReg = -1;
 }
