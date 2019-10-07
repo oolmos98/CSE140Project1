@@ -23,36 +23,35 @@ RegVals rVals;
 /*  
 	opcodes for I-format
 */
-const unsigned int andi = 0x0C,
-									 addiu = 0x09,
-									 beq = 0x04,
-									 bne = 0x05,
-									 bgtz = 0x07,
-									 lui = 0x0F,
-									 lw = 0x23,
-									 ori = 0x0D,
-									 sw = 0x2B;
+const unsigned int 	andi = 0x0C,
+					addiu = 0x09,
+					beq = 0x04,
+					bne = 0x05,
+					bgtz = 0x07,
+					lui = 0x0F,
+					lw = 0x23,
+					ori = 0x0D,
+					sw = 0x2B;
 /*  
 	opcodes for J-format
 */
-const unsigned int jal = 0x03,
-									 jump = 0x02;
+const unsigned int 	jal = 0x03,
+					jump = 0x02;
 
 /*
 
-	opcodes for R-Format
+	function codes for R-Format
 
 */
 
-const unsigned int
-		addu = 0x21,
-		and = 0x24,
-		jr = 0x08,
-		or = 0x25,
-		slt = 0x2A,
-		sll = 0x00, // uses shamt
-		srl = 0x02, // uses shamt
-		subu = 0x23;
+const unsigned int 	addu = 0x21,
+					and = 0x24,
+					jr = 0x08,
+					or = 0x25,
+					slt = 0x2A,
+					sll = 0x00, // uses shamt
+					srl = 0x02, // uses shamt
+					subu = 0x23;
 
 /*
 
@@ -503,33 +502,33 @@ void PrintInstruction(DecodedInstr *d)
 	{
 		if (d->regs.r.funct == sll || d->regs.r.funct == srl)
 		{
-			printf("%s $%d, $%d, %d\n", instr, d->regs.r.rd, d->regs.r.rs, d->regs.r.shamt);
+			printf("%s\t$%d, $%d, %d\n", instr, d->regs.r.rd, d->regs.r.rs, d->regs.r.shamt);
 		}
 		else if (d->regs.r.funct == jr)
 		{
-			printf("%s $%d\n", instr, 31);
+			printf("%s\t$%d\n", instr, 31);
 		}
 		else
 		{
-			printf("%s $%d, $%d, $%d\n", instr, d->regs.r.rd, d->regs.r.rs, d->regs.r.rt);
+			printf("%s\t$%d, $%d, $%d\n", instr, d->regs.r.rd, d->regs.r.rs, d->regs.r.rt);
 		}
 	}
 	else if (d->type == I)
 	{
 		if (d->op == bne || d->op == beq)
 		{
-			printf("%s $%d, $%d, 0x00%x\n", instr, d->regs.i.rs, d->regs.i.rt, mips.pc + ((4 * d->regs.i.addr_or_immed) + 4));
+			printf("%s\t$%d, $%d, 0x%8.8x\n", instr, d->regs.i.rs, d->regs.i.rt, mips.pc + ((4 * d->regs.i.addr_or_immed) + 4));
 		}
 		else if (d->op == lw || d->op == sw)
 		{
-			printf("%s $%d, %d($%d)\n", instr, d->regs.i.rt, d->regs.i.addr_or_immed, d->regs.i.rs);
+			printf("%s\t$%d, %d($%d)\n", instr, d->regs.i.rt, d->regs.i.addr_or_immed, d->regs.i.rs);
 		}
 		else
-			printf("%s $%d, $%d, %d\n", instr, d->regs.i.rt, d->regs.i.rs, d->regs.i.addr_or_immed);
+			printf("%s\t$%d, $%d, %d\n", instr, d->regs.i.rt, d->regs.i.rs, d->regs.i.addr_or_immed);
 	}
 	else if (d->type == J)
 	{
-		printf("%s 0x00%x\n", instr, d->regs.j.target);
+		printf("%s\t0x%8.8x\n", instr, d->regs.j.target);
 	}
 
 	free(instr);
@@ -776,6 +775,7 @@ void RegWrite(DecodedInstr *d, int val, int *changedReg)
 	{
 		if (d->op == jal)
 		{
+
 			*changedReg = 31;
 			//mips.registers[31] = val;
 			//return;
