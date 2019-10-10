@@ -64,7 +64,8 @@ const unsigned int addu = 0x21,
  *  to zero, and the instructions read from the given file.
  *  The other arguments govern how the program interacts with the user.
  */
-void InitComputer(FILE *filein, int printingRegisters, int printingMemory, int debugging, int interactive)
+void InitComputer(FILE *filein, int printingRegisters, int printingMemory,
+									int debugging, int interactive)
 {
 	int k;
 	unsigned int instr;
@@ -764,12 +765,20 @@ int Mem(DecodedInstr *d, int val, int *changedMem)
 void RegWrite(DecodedInstr *d, int val, int *changedReg)
 {
 	*changedReg = -1;
+	//If Value 0, nothing should happen
+	// if (val == 0)
+	// {
+	// 	return;
+	// }
 	//	printf("Value in Regw: %d\n", val);
 	if (d->type == J)
 	{
 		if (d->op == jal)
 		{
+
 			*changedReg = 31;
+			//mips.registers[31] = val;
+			//return;
 		}
 	}
 	if (d->type == R)
@@ -779,6 +788,7 @@ void RegWrite(DecodedInstr *d, int val, int *changedReg)
 			*changedReg = d->regs.r.rd;
 			mips.registers[*changedReg] = val;
 		}
+		//return;
 	}
 	if (d->type == I)
 	{
@@ -793,4 +803,5 @@ void RegWrite(DecodedInstr *d, int val, int *changedReg)
 			mips.registers[*changedReg] = val;
 		}
 	}
+	//*changedReg = -1;
 }
