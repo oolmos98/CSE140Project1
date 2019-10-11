@@ -632,14 +632,14 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 		case lw:
 			// Since our stack memory pointer is in the highest memory of our current program
 			// We are subtract our stack pointer by our immediate * 4.
-			return (mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed + 4));
+			return (mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed));
 			break;
 
 		case sw:
 			// Since our stack memory pointer is in the highest memory of our current program
 			// We are subtract our stack pointer by our immediate * 4.
 			//printf("Accessing Memory: 0x%8.8x\n",mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed ));
-			return (mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed + 4));
+			return (mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed));
 			break;
 
 		default:
