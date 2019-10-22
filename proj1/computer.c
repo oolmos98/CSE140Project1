@@ -64,7 +64,8 @@ const unsigned int addu = 0x21,
  *  to zero, and the instructions read from the given file.
  *  The other arguments govern how the program interacts with the user.
  */
-void InitComputer(FILE *filein, int printingRegisters, int printingMemory, int debugging, int interactive)
+void InitComputer(FILE *filein, int printingRegisters, int printingMemory,
+									int debugging, int interactive)
 {
 	int k;
 	unsigned int instr;
@@ -333,7 +334,7 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals)
 		break;
 	case 'J':
 		/*
-				I-format
+				J-format
 				opcode, jump_addr
 
 				x - opcode
@@ -523,7 +524,7 @@ void PrintInstruction(DecodedInstr *d)
 			printf("%s\t$%d, %d($%d)\n", instr, d->regs.i.rt, d->regs.i.addr_or_immed, d->regs.i.rs);
 		}
 		else
-			printf("%s\t$%d, $%d, %d\n", instr, d->regs.i.rt, d->regs.i.rs, d->regs.i.addr_or_immed);
+			printf("%s\t$%d, $%d, %8.8x\n", instr, d->regs.i.rt, d->regs.i.rs, d->regs.i.addr_or_immed);
 	}
 	else if (d->type == J)
 	{
@@ -563,7 +564,7 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 
 		case srl:
 			//mips.registers[d->regs.r.rd] = mips.registers[rVals->R_rt] >> d->regs.r.shamt;
-			return mips.registers[rVals->R_rt] >> d->regs.r.shamt;
+			return (unsigned int)mips.registers[rVals->R_rt] >> d->regs.r.shamt;
 			break;
 
 		case and:
@@ -631,14 +632,14 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 		case lw:
 			// Since our stack memory pointer is in the highest memory of our current program
 			// We are subtract our stack pointer by our immediate * 4.
-			return (mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed));
+			return (mips.registers[d->regs.i.rs] + (d->regs.i.addr_or_immed));
 			break;
 
 		case sw:
 			// Since our stack memory pointer is in the highest memory of our current program
 			// We are subtract our stack pointer by our immediate * 4.
 			//printf("Accessing Memory: 0x%8.8x\n",mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed ));
-			return (mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed));
+			return (mips.registers[d->regs.i.rs] + (d->regs.i.addr_or_immed));
 			break;
 
 		default:
@@ -764,12 +765,20 @@ int Mem(DecodedInstr *d, int val, int *changedMem)
 void RegWrite(DecodedInstr *d, int val, int *changedReg)
 {
 	*changedReg = -1;
+	//If Value 0, nothing should happen
+	// if (val == 0)
+	// {
+	// 	return;
+	// }
 	//	printf("Value in Regw: %d\n", val);
 	if (d->type == J)
 	{
 		if (d->op == jal)
 		{
+
 			*changedReg = 31;
+			//mips.registers[31] = val;
+			//return;
 		}
 	}
 	if (d->type == R)
@@ -779,6 +788,7 @@ void RegWrite(DecodedInstr *d, int val, int *changedReg)
 			*changedReg = d->regs.r.rd;
 			mips.registers[*changedReg] = val;
 		}
+		//return;
 	}
 	if (d->type == I)
 	{
@@ -793,4 +803,5 @@ void RegWrite(DecodedInstr *d, int val, int *changedReg)
 			mips.registers[*changedReg] = val;
 		}
 	}
+	//*changedReg = -1;
 }
