@@ -558,7 +558,7 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 
 		case sll:
 			//mips.registers[d->regs.r.rd] = mips.registers[rVals->R_rt] << d->regs.r.shamt;
-			return (unsigned)mips.registers[rVals->R_rt] << d->regs.r.shamt;
+			return (unsigned int)mips.registers[rVals->R_rt] << d->regs.r.shamt;
 			break;
 
 		case srl:
