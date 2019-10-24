@@ -23,20 +23,20 @@ RegVals rVals;
 /*  
 	opcodes for I-format
 */
-#define andi 0x0C
-#define addiu 0x09
-#define beq 0x04
-#define bne 0x05
-#define bgtz 0x07
-#define lui 0x0F
-#define lw 0x23
-#define ori 0x0D
-#define sw 0x2B
+const unsigned int andi = 0x0C,
+									 addiu = 0x09,
+									 beq = 0x04,
+									 bne = 0x05,
+									 bgtz = 0x07,
+									 lui = 0x0F,
+									 lw = 0x23,
+									 ori = 0x0D,
+									 sw = 0x2B;
 /*  
 	opcodes for J-format
 */
-#define jal 0x03
-#define jump 0x02
+const unsigned int jal = 0x03,
+									 jump = 0x02;
 
 /*
 
@@ -44,14 +44,14 @@ RegVals rVals;
 
 */
 
-#define addu 0x21
-#define and 0x24
-#define jr 0x08
-#define or 0x25
-#define slt 0x2A
-#define sll 0x00 // uses shamt
-#define srl 0x02 // uses shamt
-#define subu 0x23
+const unsigned int addu = 0x21,
+									 and = 0x24,
+									 jr = 0x08,
+									 or = 0x25,
+									 slt = 0x2A,
+									 sll = 0x00, // uses shamt
+		srl = 0x02,								 // uses shamt
+		subu = 0x23;
 
 /*
 
@@ -558,7 +558,7 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 
 		case sll:
 			//mips.registers[d->regs.r.rd] = mips.registers[rVals->R_rt] << d->regs.r.shamt;
-			return (unsigned)mips.registers[rVals->R_rt] << d->regs.r.shamt;
+			return mips.registers[rVals->R_rt] << d->regs.r.shamt;
 			break;
 
 		case srl:
@@ -631,14 +631,14 @@ int Execute(DecodedInstr *d, RegVals *rVals)
 		case lw:
 			// Since our stack memory pointer is in the highest memory of our current program
 			// We are subtract our stack pointer by our immediate * 4.
-			return (mips.registers[d->regs.i.rs] + (d->regs.i.addr_or_immed));
+			return (mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed));
 			break;
 
 		case sw:
 			// Since our stack memory pointer is in the highest memory of our current program
 			// We are subtract our stack pointer by our immediate * 4.
 			//printf("Accessing Memory: 0x%8.8x\n",mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed ));
-			return (mips.registers[d->regs.i.rs] + (d->regs.i.addr_or_immed));
+			return (mips.registers[d->regs.i.rs] - (d->regs.i.addr_or_immed));
 			break;
 
 		default:
